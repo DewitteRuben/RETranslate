@@ -16,11 +16,11 @@ program.option(
   "locale-reswarm"
 );
 program.option(
-  "-dev, --dev",
+  "-d, --dev",
   "if developing",
 );
 program.option(
-  "-d, --directory <path>",
+  "-dir, --directory <path>",
   "directory of language folders",
   "../frontend/src/modules/language"
 );
@@ -30,17 +30,17 @@ program.option(
   "en"
 );
 program.option(
-  "-v, --variable <name>",
+  "-var, --variable <name>",
   "name of globally exposed language object variable",
   "languageReswarm"
 );
 program.parse(process.argv);
 
-const directory = isDev ? "./language" : program.directory;
+const isDev = program.dev;
 const fileNamePrefix = program.prefix;
 const entryPoint = program.entry;
 const languageObjectVariable = program.variable;
-const isDev = program.dev;
+const directory = isDev ? "./language" : program.directory;
 
 function getFileName(language) {
   return `${fileNamePrefix}-${language}.js`;
@@ -75,6 +75,4 @@ function getEntryLanguageObject() {
 
   const entry = getEntryLanguageObject();
   console.log(entry);
-
-  console.log(Object.keys(entry).length);
 })();
