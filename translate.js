@@ -4,9 +4,15 @@ const languages = require("./languages");
 const { Command } = require("commander");
 const chalk = require("chalk");
 const fetch = require("node-fetch");
-const translate = require("translate-google")
 const program = new Command();
 const error = chalk.bold.red;
+const prompts = require("prompts");
+const sectionRegExp = /- .* -/g;
+const { Translate } = require("@google-cloud/translate").v2;
+
+const translate = new Translate({
+  key: "AIzaSyAANJZDJ-MMEcBjNIQSkRhAVXFOCP7EBYM",
+});
 
 // process.removeAllListeners("warning");
 program.version("1.0.0");
@@ -15,10 +21,7 @@ program.option(
   "prefix of locale file",
   "locale-reswarm"
 );
-program.option(
-  "-d, --dev",
-  "if developing",
-);
+program.option("-d, --dev", "if developing");
 program.option(
   "-dir, --directory <path>",
   "directory of language folders",
@@ -46,22 +49,106 @@ function getFileName(language) {
   return `${fileNamePrefix}-${language}.js`;
 }
 
-function getEntryLanguageObject() {
-  try {
-    require(`${directory}/${entryPoint}/${getFileName(entryPoint)}`);
-    const langObject = this[languageObjectVariable];
-    if (!langObject) {
-      return error(
-        `The language object was not found in the entryPoint file. var: ${languageObjectVariable}`
-      );
-    }
-    return langObject;
-  } catch (err) {
-    return error(err.message);
-  }
+async function selectTranslationSection(sections) {
+  const select = {
+    type: "select",
+    name: "name",
+    message: "Pick a section",
+    choices: sections.map((s) => ({ title: s.data, value: s.data })),
+  };
+
+  return prompts(select);
 }
 
+function getSectionNames(lines) {
+  const sectionHeaders = [];
+  for (let i = 0, j = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const match = line.match(sectionRegExp);
+    if (match) {
+      sectionHeaders.push({ data: match[0], index: i });
+    }
+  }
+  return sectionHeaders;
+}
 
+async function promptSection(lines) {
+  const firstFile = lines[0];
+  const firstFileLang = firstFile.lang;
+
+  const sections = getSectionNames(firstFile.content);
+  const { name } = await selectTranslationSection(sections);
+  const nextSectionIndex = sections.findIndex((s) => s.data === name) + 1; // get index of firstFile
+  const { index } = sections[nextSectionIndex];
+
+  const sectionsByLanguage = lines.slice(1).map((f) => ({
+    sections: getSectionNames(f.content),
+    lang: f.lang,
+  }));
+
+  const otherSectionIndexes = sectionsByLanguage.map((sBL) => {
+    const nextSectionIndex = sBL.sections.findIndex((s) => s.data === name) + 1;
+    return {
+      lang: sBL.lang,
+      index: sBL.sections[nextSectionIndex].index - 1,
+    };
+  });
+
+  return [{ lang: firstFileLang, index: index - 1 }, ...otherSectionIndexes];
+}
+
+async function promptKeyAndValue() {
+  const values = [
+    {
+      type: "text",
+      name: "key",
+      message: `Enter the key of the translation`,
+    },
+    {
+      type: "text",
+      name: "value",
+      message: `Enter the initial value of the translation`,
+    },
+  ];
+
+  return prompts(values);
+}
+
+function insertIntoLines(lines, index, value) {
+  return [...lines.slice(0, index + 1), value, ...lines.slice(index + 1)];
+}
+
+function updateAllLines(allLines, insertPositions, values) {
+  return allLines.map(({ lang, content }) => ({
+    lang,
+    content: insertIntoLines(
+      content,
+      insertPositions.find((pos) => pos.lang === lang).index,
+      values.find((v) => v.lang === lang).value
+    ),
+  }));
+}
+
+function getTranslatedValues(languages, key, value) {
+  const translatePromises = languages.map(async (lang) => {
+    const [translation] = await translate.translate(value, { to: lang });
+    return {
+      lang,
+      value: `    ${key}: '${translation}',`,
+    };
+  });
+  return Promise.all(translatePromises);
+}
+
+function writeUpdatesToFile(updates) {
+  return updates.map(
+    async ({ lang, content }) =>
+      await fs.writeFile(
+        `${directory}/${lang}/${getFileName(lang)}`,
+        content.join("\n")
+      )
+  );
+}
 
 (async function () {
   const files = await fs.readdir(directory);
@@ -73,6 +160,39 @@ function getEntryLanguageObject() {
     );
   }
 
-  const entry = getEntryLanguageObject();
-  console.log(entry);
+  const localeFilesPromises = foundLanguageFolders.map(async (folderName) => ({
+    lang: folderName,
+    content: await fs.readFile(
+      `${directory}/${folderName}/${getFileName(folderName)}`,
+      "utf8"
+    ),
+  }));
+
+  const localeFilesValues = await Promise.all(localeFilesPromises);
+
+  const arrayOfFileLines = localeFilesValues.map(({ lang, content }) => ({
+    lang,
+    content: content.split("\n"),
+  }));
+
+  const { key, value } = await promptKeyAndValue();
+
+  const values = await getTranslatedValues(foundLanguageFolders, key, value);
+
+  console.log(chalk.blue("In what section should the translation be added?"));
+
+  const insertPositionsByLang = await promptSection(arrayOfFileLines);
+
+  const updatedLines = updateAllLines(
+    arrayOfFileLines,
+    insertPositionsByLang,
+    values
+  );
+
+  try {
+    const results = await Promise.all(writeUpdatesToFile(updatedLines));
+    console.log(chalk.green("Succesfully translated to all files!"));
+  } catch (err) {
+    error(err.message);
+  }
 })();

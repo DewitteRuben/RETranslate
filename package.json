@@ -10,9 +10,10 @@
   "author": "Ruben Dewitte",
   "license": "MIT",
   "dependencies": {
+    "@google-cloud/translate": "^6.0.2",
     "chalk": "^4.1.0",
     "commander": "^6.0.0",
     "node-fetch": "^2.6.0",
-    "translate-google": "^1.4.3"
+    "prompts": "^2.3.2"
   }
 }
