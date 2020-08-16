@@ -26,7 +26,7 @@ program.option("-d, --dev", "if developing");
 program.option(
   "-dir, --directory <path>",
   "directory of language folders",
-  "../frontend/src/modules/language"
+  "frontend/src/modules/language"
 );
 program.option(
   "-e, --entry <lang>",
