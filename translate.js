@@ -62,14 +62,26 @@ async function selectTranslationSection(sections) {
 
 function getSectionNames(lines) {
   const sectionHeaders = [];
+  const endIndex = getEndOfFileIndex(lines);
+
   for (let i = 0, j = 0; i < lines.length; i++) {
     const line = lines[i];
     const match = line.match(sectionRegExp);
     if (match) {
-      sectionHeaders.push({ data: match[0], index: i });
+      sectionHeaders.push({ data: match[0], index: i, end: endIndex });
     }
   }
   return sectionHeaders;
+}
+
+function getEndOfFileIndex(lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.includes("}") && lines.length - i < 10) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 async function promptSection(lines) {
@@ -79,7 +91,10 @@ async function promptSection(lines) {
   const sections = getSectionNames(firstFile.content);
   const { name } = await selectTranslationSection(sections);
   const nextSectionIndex = sections.findIndex((s) => s.data === name) + 1; // get index of firstFile
-  const { index } = sections[nextSectionIndex];
+  const nextSection = sections[nextSectionIndex];
+  const index = nextSection
+    ? nextSection.index
+    : getEndOfFileIndex(firstFile) - 1;
 
   const sectionsByLanguage = lines.slice(1).map((f) => ({
     sections: getSectionNames(f.content),
@@ -88,9 +103,11 @@ async function promptSection(lines) {
 
   const otherSectionIndexes = sectionsByLanguage.map((sBL) => {
     const nextSectionIndex = sBL.sections.findIndex((s) => s.data === name) + 1;
+    const nextSection = sBL.sections[nextSectionIndex];
+    const endOfFile = sBL.sections.find((s) => s.end).end;
     return {
       lang: sBL.lang,
-      index: sBL.sections[nextSectionIndex].index - 1,
+      index: nextSection ? nextSection.index - 1 : endOfFile - 1,
     };
   });
 
@@ -119,14 +136,25 @@ function insertIntoLines(lines, index, value) {
 }
 
 function updateAllLines(allLines, insertPositions, values) {
-  return allLines.map(({ lang, content }) => ({
-    lang,
-    content: insertIntoLines(
+  return allLines.map(({ lang, content }) => {
+    const updatedContent = insertIntoLines(
       content,
       insertPositions.find((pos) => pos.lang === lang).index,
       values.find((v) => v.lang === lang).value
-    ),
-  }));
+    );
+
+    const endIndex = getEndOfFileIndex(updatedContent);
+    const secondLastLine = updatedContent[endIndex - 2].trimEnd();
+
+    if (secondLastLine.charAt(secondLastLine.length - 1) !== ",") {
+      updatedContent[endIndex - 2] = secondLastLine + ",";
+    }
+
+    return {
+      lang,
+      content: updatedContent,
+    };
+  });
 }
 
 function getTranslatedValues(languages, key, value) {
