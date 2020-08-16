@@ -2,10 +2,13 @@
   "name": "translate-reswarm",
   "version": "1.0.0",
   "description": "translates the english locale file",
-  "main": "languages.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node translate.js"
+    "start": "node index.js"
+  },
+  "bin": {
+    "retrans": "./index.js"
   },
   "author": "Ruben Dewitte",
   "license": "MIT",
