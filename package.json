@@ -1,6 +1,6 @@
 {
   "name": "retrans",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "translates the locale files for reswarm",
   "main": "index.js",
   "type": "module",
