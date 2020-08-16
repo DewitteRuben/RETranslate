@@ -16,7 +16,7 @@ const { Translate } = require("@google-cloud/translate").v2;
 require("dotenv").config();
 
 if (!process.env.GOOGLE_TRANSLATE_API_KEY) {
-  error("Please set your Google Translate API Key env variable using 'GOOGLE_TRANSLATE_API_KEY='");
+  console.log(error("Please set your Google Translate API Key env variable using 'GOOGLE_TRANSLATE_API_KEY='"));
   return; 
 }
 
@@ -230,6 +230,6 @@ function writeUpdatesToFile(updates) {
     const results = await Promise.all(writeUpdatesToFile(updatedLines));
     console.log(chalk.green("Succesfully translated to all files!"));
   } catch (err) {
-    error(err.message);
+    console.log(error(err.message));
   }
 })();
