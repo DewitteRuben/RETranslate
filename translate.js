@@ -9,9 +9,10 @@ const error = chalk.bold.red;
 const prompts = require("prompts");
 const sectionRegExp = /- .* -/g;
 const { Translate } = require("@google-cloud/translate").v2;
+require("dotenv").config();
 
 const translate = new Translate({
-  key: "AIzaSyAANJZDJ-MMEcBjNIQSkRhAVXFOCP7EBYM",
+  key: process.env.GOOGLE_TRANSLATE_API_KEY,
 });
 
 // process.removeAllListeners("warning");
