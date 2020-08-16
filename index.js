@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const process = require("process");
 const fs = require("fs").promises;
 const languages = require("./languages");
@@ -15,7 +17,7 @@ const translate = new Translate({
   key: process.env.GOOGLE_TRANSLATE_API_KEY,
 });
 
-// process.removeAllListeners("warning");
+process.removeAllListeners("warning");
 program.version("1.0.0");
 program.option(
   "-p, --prefix <prefix>",
