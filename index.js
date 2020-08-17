@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const process = require("process");
-process.removeAllListeners("warning");
+// process.removeAllListeners("warning");
 
 const fs = require("fs").promises;
 const languages = require("./languages");
@@ -187,6 +187,21 @@ function writeUpdatesToFile(updates) {
   );
 }
 
+function findKeyInLines(key, arrayOfFileLines) {
+  for (let i = 0; i < arrayOfFileLines.length; i++) {
+    const file = arrayOfFileLines[i];
+    const { content, lang } = file;
+    const lines = content;
+    for (let j = 0; j < lines.length; j++) {
+      const line = lines[j];
+      if (line.includes(`${key}:`)) {
+        return {lang, index: j, line};
+      }
+    }    
+  }
+  return false;
+}
+
 (async function () {
   const files = await fs.readdir(directory);
 
@@ -212,7 +227,16 @@ function writeUpdatesToFile(updates) {
     content: content.split("\n"),
   }));
 
-  const { key, value } = await promptKeyAndValue();
+  let { key, value } = await promptKeyAndValue();
+
+  let existingKeyData = findKeyInLines(key, arrayOfFileLines);
+  while (existingKeyData) {
+    const { line, index, lang } = existingKeyData;
+    console.log(error(`The key ${key} you provided already exists.`));
+    console.log(chalk.green(`${(lang.toUpperCase())} Line ${index}: ${line}`));
+    ({ key, value } = await promptKeyAndValue());
+    existingKeyData = findKeyInLines(key, arrayOfFileLines);
+  }
 
   const values = await getTranslatedValues(foundLanguageFolders, key, value);
 
