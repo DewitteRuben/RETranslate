@@ -1,10 +1,10 @@
 # RETranslate
 
-<img src="https://s7.gifyu.com/images/96e621c16774220855138badd05cf4ff-1.gif" alt="demo gif" title="demo gif" />
+<img src="https://github.com/DewitteRuben/RETranslate/blob/master/retrans%20demo.gif?raw=true" alt="demo gif" title="demo gif" />
 
 ## Setup
 
-Create a .env file in the root of your Reswarm Project and include your Google Cloud Translate API Key
+Create a `.env` file in the root of your Reswarm Project and include your Google Cloud Translate API Key
 
 ```
 GOOGLE_TRANSLATE_API_KEY=KEY_HERE
