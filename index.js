@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const process = require("process");
-process.removeAllListeners("warning");
+// process.removeAllListeners("warning");
 
 const fs = require("fs").promises;
 const languages = require("./languages");
@@ -203,6 +203,7 @@ function findKeyInLines(key, arrayOfFileLines) {
 }
 
 (async function () {
+  try {
   const files = await fs.readdir(directory);
 
   const foundLanguageFolders = files.filter((f) => languages.includes(f));
@@ -250,10 +251,14 @@ function findKeyInLines(key, arrayOfFileLines) {
     values
   );
 
-  try {
     const results = await Promise.all(writeUpdatesToFile(updatedLines));
     console.log(chalk.green("Succesfully translated to all files!"));
   } catch (err) {
-    console.log(error(err.message));
+    if (err.code === "ENOENT") {
+      console.log(error("Please ensure you are in the root directory of RESWARM."));
+      console.log(error("Or supply a different directory with -dir, --directory"));
+    } else {
+      console.log(error(err.message));
+    }
   }
 })();
