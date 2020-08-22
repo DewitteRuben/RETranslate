@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const process = require("process");
-// process.removeAllListeners("warning");
+process.removeAllListeners("warning");
 
 const fs = require("fs").promises;
 const languages = require("./languages");
@@ -16,8 +16,7 @@ const { Translate } = require("@google-cloud/translate").v2;
 require("dotenv").config();
 
 if (!process.env.GOOGLE_TRANSLATE_API_KEY) {
-  console.log(error("Please set your Google Translate API Key env variable using 'GOOGLE_TRANSLATE_API_KEY='"));
-  return; 
+  return console.log(error("Please set your Google Translate API Key env variable using 'GOOGLE_TRANSLATE_API_KEY='"));
 }
 
 const translate = new Translate({
@@ -239,6 +238,10 @@ function findKeyInLines(key, arrayOfFileLines) {
     existingKeyData = findKeyInLines(key, arrayOfFileLines);
   }
 
+  if (!key || !key.length || !value || !value.length) {
+    return console.log(error("Please enter a valid key and value. Restart the program to try again."))
+  }
+
   const values = await getTranslatedValues(foundLanguageFolders, key, value);
 
   console.log(chalk.blue("In what section should the translation be added?"));
@@ -254,6 +257,7 @@ function findKeyInLines(key, arrayOfFileLines) {
     const results = await Promise.all(writeUpdatesToFile(updatedLines));
     console.log(chalk.green("Succesfully translated to all files!"));
   } catch (err) {
+    console.log(err);
     if (err.code === "ENOENT") {
       console.log(error("Please ensure you are in the root directory of RESWARM."));
       console.log(error("Or supply a different directory with -dir, --directory"));
