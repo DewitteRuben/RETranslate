@@ -257,7 +257,6 @@ function findKeyInLines(key, arrayOfFileLines) {
     const results = await Promise.all(writeUpdatesToFile(updatedLines));
     console.log(chalk.green("Succesfully translated to all files!"));
   } catch (err) {
-    console.log(err);
     if (err.code === "ENOENT") {
       console.log(error("Please ensure you are in the root directory of RESWARM."));
       console.log(error("Or supply a different directory with -dir, --directory"));
