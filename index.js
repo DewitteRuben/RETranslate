@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const process = require("process");
-// process.removeAllListeners("warning");
+process.removeAllListeners("warning");
 
 const fs = require("fs").promises;
 const languages = require("./languages");

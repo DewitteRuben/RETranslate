@@ -3,7 +3,6 @@
   "version": "1.1.1",
   "description": "translates the locale files for reswarm",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
