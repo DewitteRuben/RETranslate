@@ -193,7 +193,7 @@ function findKeyInLines(key, arrayOfFileLines) {
     const lines = content;
     for (let j = 0; j < lines.length; j++) {
       const line = lines[j];
-      if (line.includes(`${key}:`)) {
+      if (line.split(`'`)[0].includes(`${key}:`)) {
         return {lang, index: j, line};
       }
     }    
